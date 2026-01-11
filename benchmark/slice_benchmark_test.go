@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/samber/lo"
+	"github.com/samber/lo/mutable"
 )
 
 var lengths = []int{10, 100, 1000}
@@ -198,5 +199,27 @@ func BenchmarkToSlicePtr(b *testing.B) {
 	preallocated := make([]int, 100000)
 	for i := 0; i < b.N; i++ {
 		_ = lo.ToSlicePtr(preallocated)
+	}
+}
+
+func BenchmarkShuffle(b *testing.B) {
+	for _, n := range lengths {
+		ints := genSliceInt(n)
+		b.Run(fmt.Sprintf("ints_%d", n), func(b *testing.B) {
+			b.ReportAllocs() // This reports memory allocations
+			for i := 0; i < b.N; i++ {
+				mutable.Shuffle(ints)
+			}
+		})
+	}
+
+	for _, n := range lengths {
+		strs := genSliceString(n)
+		b.Run(fmt.Sprintf("strings_%d", n), func(b *testing.B) {
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				mutable.Shuffle(strs)
+			}
+		})
 	}
 }
