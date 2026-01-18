@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"golang.org/x/sync/singleflight"
 )
 
 type synchronize struct {
@@ -144,4 +146,17 @@ func WaitForWithContext(ctx context.Context, condition func(ctx context.Context,
 			}
 		}
 	}
+}
+
+func SingleFlight[T any](key string, fn func() (T, error)) (T, error) {
+	var flight singleflight.Group
+	var t T
+	resp, err, _ := flight.Do(key, func() (interface{}, error) {
+		return fn()
+	})
+	if err != nil {
+		return t, err
+	}
+	t = resp.(T)
+	return t, nil
 }

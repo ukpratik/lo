@@ -435,3 +435,31 @@ func TestFanOut(t *testing.T) { //nolint:paralleltest
 		is.Zero(msg)
 	}
 }
+
+func TestSingleFlight(t *testing.T) {
+	is := assert.New(t)
+
+	type model struct {
+		userId int
+	}
+	resp, err := SingleFlight("keyTest", func() (*model, error) {
+		m := &model{userId: 2}
+		return m, nil
+	})
+	is.Nil(err)
+	is.Equal(&model{
+		userId: 2,
+	}, resp)
+
+	for i := 0; i < 1000; i++ {
+		resp, err = SingleFlight("keyTest", func() (*model, error) {
+			m := &model{userId: 2}
+			return m, nil
+		})
+		is.Nil(err)
+		is.NotNil(resp)
+		is.Equal(2, resp.userId)
+	}
+
+	//is.InDelta(400*time.Millisecond, time.Since(t1), float64(50*time.Millisecond))
+}
